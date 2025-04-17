@@ -2,10 +2,92 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>مرحبًا بك</title>
+  <title>لوحة التحكم - تحديث بيانات الدخول</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; direction: rtl; }
+    h2 { color: #333; }
+    input, button { margin: 10px 0; padding: 10px; width: 100%; max-width: 400px; }
+    button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+    .status { margin-top: 15px; font-weight: bold; }
+  </style>
 </head>
 <body>
-  <h2>👋 مرحبًا بك في سيرفر التوثيق</h2>
-  <p>هذا السيرفر يستضيف ملف <code>auth.json</code> الخاص بالمصادقة لاستخدامه في السكربتات.</p>
+  <h2>🔐 لوحة التحكم: تعديل بيانات auth.json في GitHub</h2>
+
+  <label>📛 اسم المستخدم على GitHub:</label>
+  <input type="text" id="ghUser" placeholder="مثال: mouad0006">
+
+  <label>🔑 Personal Access Token:</label>
+  <input type="password" id="ghToken" placeholder="يفضل أن يكون read/write">
+
+  <label>👤 اسم المستخدم الجديد:</label>
+  <input type="text" id="newUser" placeholder="مثال: admin">
+
+  <label>🔐 كلمة المرور الجديدة:</label>
+  <input type="text" id="newPass" placeholder="مثال: 123456">
+
+  <button id="saveBtn">💾 حفظ التغييرات</button>
+
+  <div class="status" id="status"></div>
+
+  <script>
+    const owner = "mouad0006";       // غيّره إذا تغيّر الاسم
+    const repo = "auth";             // اسم المستودع
+    const path = "auth.json";        // اسم الملف
+
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const username = document.getElementById("newUser").value;
+      const password = document.getElementById("newPass").value;
+      const ghUser = document.getElementById("ghUser").value;
+      const token = document.getElementById("ghToken").value;
+      const statusDiv = document.getElementById("status");
+
+      if (!username || !password || !ghUser || !token) {
+        statusDiv.textContent = "⚠️ الرجاء ملء جميع الحقول.";
+        statusDiv.style.color = "red";
+        return;
+      }
+
+      const auth = btoa(`${ghUser}:${token}`);
+      const apiURL = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+      try {
+        // الحصول على sha للملف الحالي
+        const getRes = await fetch(apiURL, {
+          headers: { Authorization: `Basic ${auth}` }
+        });
+        const fileData = await getRes.json();
+
+        // إنشاء المحتوى الجديد
+        const newContent = btoa(JSON.stringify({ username, password }, null, 2));
+
+        // إرسال التحديث
+        const putRes = await fetch(apiURL, {
+          method: "PUT",
+          headers: {
+            Authorization: `Basic ${auth}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "تحديث بيانات auth.json من لوحة التحكم",
+            content: newContent,
+            sha: fileData.sha
+          })
+        });
+
+        if (putRes.ok) {
+          statusDiv.textContent = "✅ تم تحديث الملف بنجاح!";
+          statusDiv.style.color = "green";
+        } else {
+          const err = await putRes.json();
+          throw new Error(err.message);
+        }
+      } catch (e) {
+        console.error(e);
+        statusDiv.textContent = "❌ فشل التحديث: " + e.message;
+        statusDiv.style.color = "red";
+      }
+    });
+  </script>
 </body>
 </html>
