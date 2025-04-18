@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>لوحة التحكم السرية</title>
+  <style>
+    body { font-family: Tahoma; direction: rtl; background: #f5f5f5; padding: 30px; }
+    .box { background: white; padding: 20px; max-width: 500px; margin: auto; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #4CAF50; color: white; border: none; font-weight: bold; }
+    .status { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🔐 لوحة التحكم لتحديث بيانات المصادقة</h2>
+    <input type="text" id="ghUser" placeholder="اسم المستخدم في GitHub">
+    <input type="password" id="ghToken" placeholder="GitHub Token (صلاحية: public_repo)">
+    <input type="text" id="username" placeholder="اسم المستخدم الجديد">
+    <input type="text" id="password" placeholder="كلمة المرور الجديدة">
+    <button onclick="updateData()">💾 تحديث البيانات</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    const apiUrl = "https://api.github.com/repos/mouad0006/auth/contents/auth.json";
+
+    async function updateData() {
+      const ghUser = document.getElementById("ghUser").value.trim();
+      const ghToken = document.getElementById("ghToken").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const status = document.getElementById("status");
+
+      if (!ghUser || !ghToken || !username || !password) {
+        status.textContent = "⚠️ يرجى ملء جميع الحقول";
+        status.style.color = "red";
+        return;
+      }
+
+      const auth = btoa(`${ghUser}:${ghToken}`);
+
+      try {
+        const getRes = await fetch(apiUrl, {
+          headers: { Authorization: `Basic ${auth}` }
+        });
+        const fileData = await getRes.json();
+
+        const content = btoa(JSON.stringify({ username, password }));
+        const res = await fetch(apiUrl, {
+          method: "PUT",
+          headers: {
+            Authorization: `Basic ${auth}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "update auth credentials",
+            content: content,
+            sha: fileData.sha
+          })
+        });
+
+        if (res.ok) {
+          status.textContent = "✅ تم تحديث البيانات بنجاح";
+          status.style.color = "green";
+        } else {
+          throw new Error("فشل التحديث");
+        }
+      } catch (e) {
+        console.error(e);
+        status.textContent = "❌ فشل في الاتصال بـ GitHub";
+        status.style.color = "red";
+      }
+    }
+  </script>
+</body>
+</html>
