@@ -1,5 +1,5 @@
 <?php
-
+header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
 $validToken = "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"; 
