@@ -1,10 +1,9 @@
 <?php
-// 🔐 ملف PHP سري للتحقق من بيانات الدخول
 
 header("Content-Type: application/json");
 
 // تحقق من التوكن
-$validToken = "ABC123"; // 👈 غيّره لتوكن سري خاص بك
+$validToken = "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"; 
 
 if (!isset($_GET['token']) || $_GET['token'] !== $validToken) {
     http_response_code(403);
@@ -12,10 +11,9 @@ if (!isset($_GET['token']) || $_GET['token'] !== $validToken) {
     exit;
 }
 
-// ✅ بيانات المصادقة (يمكنك جعلها مشفرة لاحقاً)
 $data = [
-  "username" => "admin",
-  "password" => "123456"
+  "username" => "Mouad",
+  "password" => "Mouad2006"
 ];
 
 echo json_encode($data);
